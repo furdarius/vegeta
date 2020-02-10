@@ -38,6 +38,10 @@ const (
 	// DefaultTimeout is the default amount of time an Attacker waits for a request
 	// before it times out.
 	DefaultTimeout = 30 * time.Second
+	// DefaultIdleConnTimeout is the default maximum amount of time an idle
+	// (keep-alive) connection will remain idle before closing itself.
+	// Zero means no limit.
+	DefaultIdleConnTimeout = 90 * time.Second
 	// DefaultConnections is the default amount of max open idle connections per
 	// target host.
 	DefaultConnections = 10000
@@ -86,6 +90,7 @@ func NewAttacker(opts ...func(*Attacker)) *Attacker {
 			TLSClientConfig:     DefaultTLSConfig,
 			MaxIdleConnsPerHost: DefaultConnections,
 			MaxConnsPerHost:     DefaultMaxConnections,
+			IdleConnTimeout:     DefaultIdleConnTimeout,
 		},
 	}
 
@@ -165,6 +170,17 @@ func Proxy(proxy func(*http.Request) (*url.URL, error)) func(*Attacker) {
 func Timeout(d time.Duration) func(*Attacker) {
 	return func(a *Attacker) {
 		a.client.Timeout = d
+	}
+}
+
+// IdleConnTimeout is the maximum amount of time an idle
+// (keep-alive) connection will remain idle before closing
+// itself.
+// Zero means no limit.
+func IdleConnTimeout(d time.Duration) func(*Attacker) {
+	return func(a *Attacker) {
+		tr := a.client.Transport.(*http.Transport)
+		tr.IdleConnTimeout = d
 	}
 }
 
